@@ -1,0 +1,147 @@
+# =============================================================================
+# FICHIER : .github/workflows/ci.yml
+# RÔLE    : Pipeline d'Intégration Continue (CI) avec GitHub Actions.
+# ÉTAPE   : 3 - CI automatique
+#
+# QU'EST-CE QUE LA CI (Intégration Continue) ?
+#   La CI est une pratique qui consiste à tester automatiquement le code
+#   à chaque modification (git push).
+#   → Si un test échoue, GitHub te prévient AVANT que le bug arrive en prod.
+#
+# QU'EST-CE QUE GITHUB ACTIONS ?
+#   C'est l'outil de CI/CD intégré à GitHub.
+#   Il lit ce fichier YAML et exécute les étapes définies sur un serveur distant.
+#
+# COMMENT L'ACTIVER ?
+#   1. Créer le dossier .github/workflows/ à la racine du projet
+#   2. Y placer ce fichier ci.yml
+#   3. Pusher sur GitHub → la pipeline se lance automatiquement !
+#
+# OÙ VOIR LES RÉSULTATS ?
+#   GitHub → ton repo → onglet "Actions"
+# =============================================================================
+
+
+# Nom de la pipeline (affiché dans l'onglet "Actions" de GitHub)
+name: CI - Tests Automatiques Calculatrice API
+
+
+# =============================================================================
+# DÉCLENCHEURS : quand la pipeline se lance-t-elle ?
+# =============================================================================
+on:
+
+  # Se déclenche à chaque "git push" sur ces branches
+  push:
+    branches:
+      - main          # branche principale
+      - etape-2-tests # branche de l'étape 2 (tests)
+      - etape-3-ci    # branche de l'étape 3 (CI)
+
+  # Se déclenche aussi lors d'une Pull Request vers "main"
+  # (utile pour vérifier le code avant de merger)
+  pull_request:
+    branches:
+      - main
+
+
+# =============================================================================
+# JOBS : les tâches à exécuter
+# =============================================================================
+# Un "job" est un ensemble d'étapes qui s'exécutent sur une même machine.
+# Ici on a un seul job "test" mais on pourrait en avoir plusieurs (build, deploy...).
+jobs:
+
+  # ---------------------------------------------------------------------------
+  # JOB : test
+  # Vérifie que les tests passent sur un environnement propre et vierge.
+  # ---------------------------------------------------------------------------
+  test:
+
+    # Nom affiché dans l'interface GitHub Actions
+    name: Lancer les tests pytest
+
+    # Système d'exploitation du serveur GitHub (runner)
+    # ubuntu-latest = une VM Linux Ubuntu fraîche à chaque pipeline
+    runs-on: ubuntu-latest
+
+    # -------------------------------------------------------------------------
+    # STEPS : les étapes du job (s'exécutent dans l'ordre)
+    # -------------------------------------------------------------------------
+    steps:
+
+      # -----------------------------------------------------------------------
+      # ÉTAPE 1 : Récupérer le code source
+      # -----------------------------------------------------------------------
+      # "actions/checkout" est une action officielle GitHub qui clone le repo
+      # dans la VM ubuntu. Sans ça, la VM n'aurait pas accès au code !
+      - name: 📥 Récupérer le code (git checkout)
+        uses: actions/checkout@v4
+
+
+      # -----------------------------------------------------------------------
+      # ÉTAPE 2 : Installer Python
+      # -----------------------------------------------------------------------
+      # "actions/setup-python" installe la version Python souhaitée.
+      # On précise la version pour garantir la reproductibilité.
+      - name: 🐍 Installer Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+
+      # -----------------------------------------------------------------------
+      # ÉTAPE 3 : Mettre en cache les dépendances (optimisation)
+      # -----------------------------------------------------------------------
+      # Le cache mémorise les dépendances entre les pipelines.
+      # → Si requirements.txt n'a pas changé, on réutilise le cache
+      # → Pipeline 2x plus rapide !
+      - name: 📦 Mettre en cache les dépendances pip
+        uses: actions/cache@v4
+        with:
+          # Dossier pip à mettre en cache
+          path: ~/.cache/pip
+          # Clé de cache basée sur le hash de requirements.txt
+          # Si requirements.txt change → nouvelle clé → nouveau cache
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+
+      # -----------------------------------------------------------------------
+      # ÉTAPE 4 : Installer les dépendances Python
+      # -----------------------------------------------------------------------
+      # On installe les bibliothèques listées dans requirements.txt
+      - name: 📚 Installer les dépendances (pip install)
+        run: |
+          # Mettre à jour pip lui-même
+          python -m pip install --upgrade pip
+
+          # Installer toutes les dépendances du projet
+          pip install -r requirements.txt
+
+
+      # -----------------------------------------------------------------------
+      # ÉTAPE 5 : Lancer les tests pytest
+      # -----------------------------------------------------------------------
+      # C'est l'étape centrale de la CI !
+      # -v          = verbose : affiche le nom de chaque test
+      # --tb=short  = affiche un résumé court si un test échoue
+      # Si pytest retourne une erreur (exit code != 0) → la pipeline échoue
+      - name: 🧪 Lancer les tests avec pytest
+        run: |
+          pytest tests/ -v --tb=short
+
+
+      # -----------------------------------------------------------------------
+      # ÉTAPE 6 (bonus) : Afficher un résumé
+      # -----------------------------------------------------------------------
+      # Cette étape s'exécute TOUJOURS, même si les tests ont échoué.
+      # "if: always()" = condition pour toujours exécuter cette étape.
+      - name: 📊 Résumé de la pipeline
+        if: always()
+        run: |
+          echo "======================================"
+          echo "  Pipeline terminée !"
+          echo "  Vérifiez les résultats ci-dessus."
+          echo "======================================"

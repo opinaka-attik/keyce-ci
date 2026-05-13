@@ -1,0 +1,60 @@
+# =============================================================================
+# FICHIER : docker-compose.yml
+# RÔLE    : Orchestrer nos conteneurs Docker avec une seule commande.
+#
+# QU'EST-CE QUE DOCKER COMPOSE ?
+#   Docker Compose permet de définir et lancer plusieurs conteneurs
+#   en même temps, avec leurs configurations (ports, volumes, env...).
+#   Ici on a un seul service, mais le fichier est prêt à en accueillir d'autres
+#   (ex: une base de données PostgreSQL, un cache Redis, etc.)
+#
+# COMMANDES UTILES :
+#   Lancer l'app       : docker compose up
+#   Lancer en arrière-plan : docker compose up -d
+#   Arrêter l'app      : docker compose down
+#   Voir les logs      : docker compose logs -f
+#   Reconstruire       : docker compose up --build
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# SERVICES : liste des conteneurs à lancer
+# -----------------------------------------------------------------------------
+services:
+
+  # ---------------------------------------------------------------------------
+  # SERVICE : api
+  # C'est notre application FastAPI / Calculatrice
+  # ---------------------------------------------------------------------------
+  api:
+
+    # Nom de l'image Docker qui sera construite et utilisée
+    image: calculator-api
+
+    # "build: ." signifie : construire l'image à partir du Dockerfile
+    # situé dans le dossier courant (là où se trouve docker-compose.yml)
+    build: .
+
+    # Nom du conteneur (optionnel, mais pratique pour les commandes docker)
+    container_name: calculator-api-container
+
+    # Mapping des ports : HOST:CONTENEUR
+    # "8000:8000" = le port 8000 de ta machine → port 8000 du conteneur
+    # Tu peux changer le port gauche si 8000 est déjà utilisé (ex: "9000:8000")
+    ports:
+      - "8000:8000"
+
+    # Variables d'environnement (injectées dans le conteneur)
+    # Utile pour configurer l'app sans modifier le code source
+    environment:
+      - APP_ENV=development   # Environnement : development, staging, production
+
+    # Volumes : synchronise un dossier local avec le conteneur
+    # "./app:/app/app" = le dossier local ./app est monté dans /app/app du conteneur
+    # → Avantage : modifier le code local met à jour le conteneur sans rebuild !
+    # (Utile en développement, à retirer en production)
+    volumes:
+      - ./app:/app/app
+
+    # Redémarrer automatiquement si le conteneur plante
+    # "unless-stopped" = redémarre toujours, sauf si on l'arrête manuellement
+    restart: unless-stopped

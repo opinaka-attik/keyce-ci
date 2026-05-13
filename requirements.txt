@@ -1,0 +1,33 @@
+# =============================================================================
+# FICHIER : requirements.txt
+# RÔLE    : Liste toutes les bibliothèques Python nécessaires au projet.
+#           pip lit ce fichier pour installer les dépendances automatiquement.
+#
+# COMMANDE D'INSTALLATION :
+#   pip install -r requirements.txt
+# =============================================================================
+
+# --- Production (nécessaires pour faire tourner l'API) ---
+
+# FastAPI : framework pour créer l'API web
+fastapi==0.111.0
+
+# Uvicorn : serveur web qui exécute notre application FastAPI
+# (FastAPI seul ne peut pas écouter les connexions réseau)
+uvicorn==0.30.1
+
+# Pydantic : validation automatique des données JSON (inclus avec FastAPI)
+pydantic==2.7.1
+
+
+# --- Tests (nécessaires pour l'étape 2 - pytest) ---
+
+# Pytest : framework de tests automatiques en Python
+pytest==8.2.2
+
+# Httpx : client HTTP pour simuler des requêtes vers notre API dans les tests
+# (alternative moderne à requests, compatible avec FastAPI)
+httpx==0.27.0
+
+# a ajouter  pour le test
+# python-multipart==0.0.9   
