@@ -87,7 +87,7 @@ def addition(data: OperationInput):
     Sortie  : { "operation": "addition", "a": 5, "b": 3, "result": 8 }
     """
     # On effectue le calcul
-    result = data.a + data.b
+    result = data.a - data.b
 
     # On retourne un dictionnaire → FastAPI le convertit automatiquement en JSON
     return {
